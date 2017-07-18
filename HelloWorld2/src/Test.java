@@ -4,11 +4,13 @@ public class Test {
 		int x = 0;
 		while(x<2) {
 			if(true) {
+				if(true) {
 				String one = "Hello ";
 				String two = "World";
 			
 				System.out.println(one + two);
 				x++;
+				}
 			}
 		}
 	}

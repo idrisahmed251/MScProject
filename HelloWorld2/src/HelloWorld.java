@@ -38,13 +38,17 @@ public class HelloWorld {
 		
 		final Block block = (Block) parser.createAST(null);
 		block.accept(new ASTVisitor() {
-
+			public boolean visit(SimpleName node) {
+				System.out.println(node.toString());
+				return true;
+			}
+/*
 			public boolean visit(IfStatement node) {
 				Activity activity = new Activity(StatementType.CONDITIONAL_STATEMENT, node.toString());
 				activities.addLast(activity);
 				return true;
 			}
-
+/*
 			public boolean visit(SwitchStatement node) {
 				Activity activity = new Activity(StatementType.CONDITIONAL_STATEMENT, node.toString());
 				activities.addLast(activity);

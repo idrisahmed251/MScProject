@@ -11,7 +11,7 @@ public class HelloWorld {
 		 for (File file : files)
 			 if (file.isFile())
 				 parse(readFileToString(file.getAbsolutePath()));
-		 for (Object o : activities)	System.out.println(o.toString());
+		 for (Activity activity : activities)	System.out.println(activity.toString());
 	}
 	
 	public static String readFileToString(String filePath) throws IOException {
@@ -37,57 +37,60 @@ public class HelloWorld {
 		cu.accept(new ASTVisitor() {
 
 			public boolean visit(IfStatement node) {
-				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, cu.getLineNumber(node.getStartPosition()));
+				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(SwitchStatement node) {
-				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, cu.getLineNumber(node.getStartPosition()));
+				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(DoStatement node) {
-				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()));
+				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(ForStatement node) {
-				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()));
+				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(WhileStatement node) {
-				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()));
+				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
-			public boolean visit(MethodInvocation node) {
-				Activity type = new Activity(StatementType.METHOD_INVOCATION, cu.getLineNumber(node.getStartPosition()));
-				activities.addLast(type); 
+			public boolean visit(MethodDeclaration node) {
+				Activity type = new Activity(StatementType.METHOD_DECLARATION, cu.getLineNumber(node.getStartPosition()), node);
+				activities.addLast(type);
 				return true;
 			}
 		});
 	}
 }
 
-enum StatementType { METHOD_INVOCATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION }
+enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION }
 
 class Activity {
 	StatementType statementType;
 	int startLine;
+	ASTNode node;
 	
-	public Activity(StatementType statementType, int startLine) { 
+	public Activity(StatementType statementType, int startLine, ASTNode node) { 
 		this.statementType = statementType;
 		this.startLine = startLine;
+		this.node = node;
 	}
 	
 	public String toString() {
-		return "On line " + startLine + " there is a " + statementType;
+		String output = "On line " + startLine + " there is a " + statementType + "\nThe node is:\n" + node;
+		return output;
 	}
 }
 
