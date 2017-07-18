@@ -1,13 +1,15 @@
-
 public class Test {
 	public static void testing() {
-		if(true) {
-			if(true) {
-			String one = "Hello ";
-			String two = "World";
+		int i = 0;
+		Boolean y = false;
 		
-			System.out.println(one + two);
-		}
+		if(y == false) {
+			while (i < 3) {
+				if (true) {
+					System.out.println("Hello");
+					i ++;
+				}
+			}
 		}
 	}
 	

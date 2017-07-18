@@ -75,6 +75,41 @@ public class HelloWorld {
 	}
 }
 
+
+class TreeNode<Activity> implements Iterable<TreeNode<Activity>> {
+    private TreeNode<Activity> parent;
+    private Activity nodeData;
+    private List<TreeNode<Activity>> children;
+    private List<TreeNode<Activity>> callers;
+
+    public TreeNode(Activity data) {
+        this.nodeData = data;
+        this.children = new LinkedList<TreeNode<Activity>>();
+        this.callers = new ArrayList<TreeNode<Activity>>();
+    }
+
+    public Boolean addChild(Activity child) {
+        TreeNode<Activity> childNode = new TreeNode<Activity>(child);
+        childNode.parent = this;
+        this.children.add(childNode);
+        return true;
+    }
+    
+    public List<TreeNode<Activity>> getAllChildren() { return this.children; }
+    
+    public List<TreeNode<Activity>> getAllMethodsThatCallThisNode() { return this.callers; }
+    
+    public Activity getActivityInNode() { return this.nodeData; }
+    
+    public TreeNode<Activity> getParent() { return this.parent; }
+
+	@Override
+	public Iterator<TreeNode<Activity>> iterator() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}
+
 enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION }
 
 class Activity {
@@ -94,4 +129,6 @@ class Activity {
 	}
 }
 
+
 //http://www.programcreek.com/2011/11/use-jdt-astparser-to-parse-java-file/
+//https://stackoverflow.com/questions/3522454/java-tree-data-structure

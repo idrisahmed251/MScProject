@@ -1,15 +1,14 @@
 
 public class Test {
 	public static void testing() {
-		int x = 0;
-		while(x<2) {
-			if(true) {
-				if(true) {
-				String one = "Hello ";
-				String two = "World";
-			
-				System.out.println(one + two);
-				x++;
+		int i = 0;
+		Boolean y = false;
+		
+		if(y == false) {
+			while (i < 3) {
+				if (true) {
+					System.out.println("Hello");
+					i ++;
 				}
 			}
 		}
