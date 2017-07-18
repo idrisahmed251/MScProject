@@ -1,16 +1,18 @@
 import java.io.*;
 import java.util.*;
 import org.eclipse.jdt.core.dom.*;
-
+enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE }
 public class HelloWorld {
 	static LinkedList<Activity> activities = new LinkedList<Activity>();
+	static ArrayList<TreeNode> trees = new ArrayList<TreeNode>();
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		File root = new File(new File(".").getCanonicalPath() + File.separator+"src"+File.separator);
 		File[] files = root.listFiles();
 		 for (File file : files)
-			 if (file.isFile())
-				 parse(readFileToString(file.getAbsolutePath()));
+			 if (file.isFile()){
+				 trees.add(new TreeNode<Activity>(new Activity(StatementType.NEW_TREE, 1, null)));
+				 parse(readFileToString(file.getAbsolutePath()));}
 		 for (Activity activity : activities)	System.out.println(activity.toString());
 	}
 	
@@ -35,7 +37,7 @@ public class HelloWorld {
 		final CompilationUnit cu = (CompilationUnit) parser.createAST(null);
 
 		cu.accept(new ASTVisitor() {
-
+/*
 			public boolean visit(IfStatement node) {
 				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
@@ -70,11 +72,29 @@ public class HelloWorld {
 				Activity type = new Activity(StatementType.METHOD_DECLARATION, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
-			}
+			}*/
 		});
 	}
 }
 
+class Activity {
+	StatementType statementType;
+	int startLine;
+	ASTNode node;
+	
+	public Activity(StatementType statementType, int startLine, ASTNode node) { 
+		this.statementType = statementType;
+		this.startLine = startLine;
+		this.node = node;
+	}
+	
+	public String toString() {
+		if (node == null)
+			return "There is no data packet associated to this activity. This may be because it is used as a "
+					+ "root node for a class.";
+		else return "On line " + startLine + " there is a " + statementType + "\nThe node is:\n" + node;
+	}
+}
 
 class TreeNode<Activity> implements Iterable<TreeNode<Activity>> {
     private TreeNode<Activity> parent;
@@ -102,30 +122,13 @@ class TreeNode<Activity> implements Iterable<TreeNode<Activity>> {
     public Activity getActivityInNode() { return this.nodeData; }
     
     public TreeNode<Activity> getParent() { return this.parent; }
+    
+    public Boolean isRoot() { if (parent == null) return true; else return false; }
 
 	@Override
 	public Iterator<TreeNode<Activity>> iterator() {
 		// TODO Auto-generated method stub
 		return null;
-	}
-}
-
-enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION }
-
-class Activity {
-	StatementType statementType;
-	int startLine;
-	ASTNode node;
-	
-	public Activity(StatementType statementType, int startLine, ASTNode node) { 
-		this.statementType = statementType;
-		this.startLine = startLine;
-		this.node = node;
-	}
-	
-	public String toString() {
-		String output = "On line " + startLine + " there is a " + statementType + "\nThe node is:\n" + node;
-		return output;
 	}
 }
 
