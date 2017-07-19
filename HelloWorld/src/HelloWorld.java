@@ -1,7 +1,9 @@
 import java.io.*;
 import java.util.*;
 import org.eclipse.jdt.core.dom.*;
+
 enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE }
+
 public class HelloWorld {
 	static LinkedList<Activity> activities = new LinkedList<Activity>();
 	static ArrayList<TreeNode> trees = new ArrayList<TreeNode>();
@@ -11,8 +13,9 @@ public class HelloWorld {
 		File[] files = root.listFiles();
 		 for (File file : files)
 			 if (file.isFile()){
-				 trees.add(new TreeNode<Activity>(new Activity(StatementType.NEW_TREE, 1, null)));
-				 parse(readFileToString(file.getAbsolutePath()));}
+				 String filePath = file.getAbsolutePath();
+				 trees.add(new TreeNode<Activity>(new Activity(StatementType.NEW_TREE, filePath, 1, null)));
+				 parse(readFileToString(filePath), filePath);	}
 		 for (Activity activity : activities)	System.out.println(activity.toString());
 	}
 	
@@ -30,60 +33,62 @@ public class HelloWorld {
 		return  fileData.toString();	
 	}
 
-	public static void parse(String fileToParse) {
+	public static void parse(String fileToParse, String filePath) {
 		ASTParser parser = ASTParser.newParser(AST.JLS3);
 		parser.setSource(fileToParse.toCharArray());
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		final CompilationUnit cu = (CompilationUnit) parser.createAST(null);
 
 		cu.accept(new ASTVisitor() {
-/*
+
 			public boolean visit(IfStatement node) {
-				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
-			
+/*			
 			public boolean visit(SwitchStatement node) {
-				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(DoStatement node) {
-				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.REPEATED_EXECUTION, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(ForStatement node) {
-				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.REPEATED_EXECUTION, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(WhileStatement node) {
-				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.REPEATED_EXECUTION, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
-			
+*/			
 			public boolean visit(MethodDeclaration node) {
-				Activity type = new Activity(StatementType.METHOD_DECLARATION, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.METHOD_DECLARATION, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
-			}*/
+			}
 		});
 	}
 }
 
 class Activity {
 	StatementType statementType;
+	String filePath;
 	int startLine;
 	ASTNode node;
 	
-	public Activity(StatementType statementType, int startLine, ASTNode node) { 
+	public Activity(StatementType statementType, String filePath, int startLine, ASTNode node) { 
 		this.statementType = statementType;
+		this.filePath = filePath;
 		this.startLine = startLine;
 		this.node = node;
 	}
@@ -92,7 +97,7 @@ class Activity {
 		if (node == null)
 			return "There is no data packet associated to this activity. This may be because it is used as a "
 					+ "root node for a class.";
-		else return "On line " + startLine + " there is a " + statementType + "\nThe node is:\n" + node;
+		else return "in file " + filePath + ", on line " + startLine + " there is a " + statementType + "\nThe node is:\n" + node;
 	}
 }
 
