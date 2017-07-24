@@ -3,17 +3,22 @@ import java.util.*;
 import org.eclipse.jdt.core.dom.*;
 
 public class HelloWorld {
-	static LinkedList<Activity> activities = new LinkedList<Activity>();
+	
+	static ArrayList<TreeNode<Activity>> trees = new ArrayList<TreeNode<Activity>>();
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		File root = new File(new File(".").getCanonicalPath() + File.separator+"src"+File.separator);
 		File[] files = root.listFiles();
 		 for (File file : files)
-			 if (file.isFile())
-				 parse(readFileToString(file.getAbsolutePath()));
-		 for (Activity activity : activities)	System.out.println(activity.toString());
+			 if (file.isFile()){
+				 String filePath = file.getAbsolutePath();
+				 trees.add(new TreeNode<Activity>(new Activity(StatementType.NEW_TREE, filePath, 1, null)));
+				 parse(readFileToString(filePath), filePath, trees.get(trees.size() - 1));	 
+			 }
+
+		 for (TreeNode<Activity> tree : trees)	printTree(tree);
 	}
-	
+
 	public static String readFileToString(String filePath) throws IOException {
 		StringBuilder fileData = new StringBuilder(1000);
 		BufferedReader reader = new BufferedReader(new FileReader(filePath));
@@ -28,107 +33,125 @@ public class HelloWorld {
 		return  fileData.toString();	
 	}
 
-	public static void parse(String fileToParse) {
+	public static void parse(String file, String path, TreeNode<Activity> tree) {
 		ASTParser parser = ASTParser.newParser(AST.JLS3);
-		parser.setSource(fileToParse.toCharArray());
+		parser.setSource(file.toCharArray());
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		final CompilationUnit cu = (CompilationUnit) parser.createAST(null);
 
 		cu.accept(new ASTVisitor() {
-
+/*
 			public boolean visit(IfStatement node) {
-				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(SwitchStatement node) {
-				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(DoStatement node) {
-				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.REPEATED_EXECUTION, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(ForStatement node) {
-				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.REPEATED_EXECUTION, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
 			public boolean visit(WhileStatement node) {
-				Activity type = new Activity(StatementType.REPEATED_EXECUTION, cu.getLineNumber(node.getStartPosition()), node);
+				Activity type = new Activity(StatementType.REPEATED_EXECUTION, filePath, cu.getLineNumber(node.getStartPosition()), node);
 				activities.addLast(type);
 				return true;
 			}
 			
-			public boolean visit(MethodDeclaration node) {
-				Activity type = new Activity(StatementType.METHOD_DECLARATION, cu.getLineNumber(node.getStartPosition()), node);
-				activities.addLast(type);
+			public boolean visit(MethodInvocation astNode) {
+				System.out.println(astNode.toString());
+				System.out.println(astNode.getName());
+				System.out.println("-------------------------");
+				return true;
+			}
+*/			
+			public boolean visit(MethodDeclaration astNode) {
+				Activity activity = new Activity(StatementType.METHOD_DECLARATION, path, cu.getLineNumber(astNode.getStartPosition()), astNode);
+				tree.addChild(activity);
 				return true;
 			}
 		});
 	}
-}
-
-
-class TreeNode<Activity> implements Iterable<TreeNode<Activity>> {
-    private TreeNode<Activity> parent;
-    private Activity nodeData;
-    private List<TreeNode<Activity>> children;
-    private List<TreeNode<Activity>> callers;
-
-    public TreeNode(Activity data) {
-        this.nodeData = data;
-        this.children = new LinkedList<TreeNode<Activity>>();
-        this.callers = new ArrayList<TreeNode<Activity>>();
-    }
-
-    public Boolean addChild(Activity child) {
-        TreeNode<Activity> childNode = new TreeNode<Activity>(child);
-        childNode.parent = this;
-        this.children.add(childNode);
-        return true;
-    }
-    
-    public List<TreeNode<Activity>> getAllChildren() { return this.children; }
-    
-    public List<TreeNode<Activity>> getAllMethodsThatCallThisNode() { return this.callers; }
-    
-    public Activity getActivityInNode() { return this.nodeData; }
-    
-    public TreeNode<Activity> getParent() { return this.parent; }
-
-	@Override
-	public Iterator<TreeNode<Activity>> iterator() {
-		// TODO Auto-generated method stub
-		return null;
+	
+	private static void printTree(TreeNode<Activity> tree) {
+		tree.printNode();
+		if (tree.hasChild()) for (TreeNode<Activity> child : tree.children) printTree(child);
 	}
 }
 
-enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION }
+
+enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE }
 
 class Activity {
-	StatementType statementType;
-	int startLine;
-	ASTNode node;
+	public StatementType statementType; 
+	public String filePath; 
+	public int startLine; 
+	public ASTNode astNode;
 	
-	public Activity(StatementType statementType, int startLine, ASTNode node) { 
+	public Activity(StatementType statementType, String filePath, int startLine, ASTNode node) { 
 		this.statementType = statementType;
+		this.filePath = filePath;
 		this.startLine = startLine;
-		this.node = node;
+		this.astNode = node;
 	}
 	
-	public String toString() {
-		String output = "On line " + startLine + " there is a " + statementType + "\nThe node is:\n" + node;
-		return output;
+	public String getStatementType() { return statementType.toString(); }
+	
+	public ASTNode getPayLoad() { return this.astNode; }
+	
+ 	public String toString() {
+		if (astNode == null)
+			return "There is no data packet associated to this activity. This may be because it is used as a "
+					+ "root node for a class.";
+		else return "in file " + filePath + ", on line " + startLine + " there is a " + statementType + "\nThe node is:\n" + astNode;
 	}
 }
 
+
+class TreeNode<Activity> {
+	public TreeNode<Activity> parentNode = null; 
+	public Activity astNodePayload; 
+	public List<TreeNode<Activity>> children;
+	
+	public TreeNode(Activity astNodePaylaod) {
+		this.astNodePayload = astNodePaylaod;
+		this.children = new ArrayList<TreeNode<Activity>>();
+	}
+	
+	public Boolean hasChild() { if (children.size() > 0) return true; else return false; }
+	
+	public void printNode() {
+		if (this.parentNode != null){
+			System.out.println("Parent Node is: " + parentNode);
+			System.out.println(astNodePayload.toString());
+		}
+		else
+			System.out.println(astNodePayload.toString());
+	}
+
+	public Boolean addChild(Activity astNodePayload) {
+		TreeNode<Activity> childNode = new TreeNode<Activity>(astNodePayload);
+		childNode.parentNode = this;
+		this.children.add(childNode);
+		return true;
+	}
+	
+	public Boolean isRootNode() { if (parentNode == null) return true; else return false; }
+}
 
 //http://www.programcreek.com/2011/11/use-jdt-astparser-to-parse-java-file/
 //https://stackoverflow.com/questions/3522454/java-tree-data-structure
+//http://www.programcreek.com/2011/07/find-all-callers-of-a-method/ GET ALL CALLERS OF A METHOD
