@@ -2,9 +2,8 @@ import java.io.*;
 import java.util.*;
 import org.eclipse.jdt.core.dom.*;
 
-enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE }
-
 public class HelloWorld {
+	
 	static ArrayList<TreeNode<Activity>> trees = new ArrayList<TreeNode<Activity>>();
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -13,24 +12,13 @@ public class HelloWorld {
 		 for (File file : files)
 			 if (file.isFile()){
 				 String filePath = file.getAbsolutePath();
-				 System.out.println("creating a new tree for: " + filePath);
 				 trees.add(new TreeNode<Activity>(new Activity(StatementType.NEW_TREE, filePath, 1, null)));
 				 parse(readFileToString(filePath), filePath, trees.get(trees.size() - 1));	 
 			 }
 		 
-		 for (TreeNode<Activity> tree: trees) {
-			 tree.printNode();
-		 }
-		/*
-		 for (TreeNode<Activity> tree : trees) {
-			 Iterator<TreeNode<Activity>> it = tree.iterator();
-			 while (it.hasNext()) {
-				 TreeNode<Activity> cur = it.next();
-				 cur.printNode();
-			 }
-		 }*/
+		 for (TreeNode<Activity> tree : trees)	printTree(tree);
 	}
-	
+
 	public static String readFileToString(String filePath) throws IOException {
 		StringBuilder fileData = new StringBuilder(1000);
 		BufferedReader reader = new BufferedReader(new FileReader(filePath));
@@ -90,26 +78,34 @@ public class HelloWorld {
 			}
 		});
 	}
+	
+	private static void printTree(TreeNode<Activity> tree) {
+		if (tree.hasChild())
+			for (TreeNode<Activity> child : tree.children)
+				printTree(child);
+	}
 }
+
+enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE }
 
 class Activity {
 	StatementType statementType;
 	String filePath;
 	int startLine;
-	ASTNode node;
+	ASTNode payLoad;
 	
 	public Activity(StatementType statementType, String filePath, int startLine, ASTNode node) { 
 		this.statementType = statementType;
 		this.filePath = filePath;
 		this.startLine = startLine;
-		this.node = node;
+		this.payLoad = node;
 	}
 	
 	public String toString() {
-		if (node == null)
+		if (payLoad == null)
 			return "There is no data packet associated to this activity. This may be because it is used as a "
 					+ "root node for a class.";
-		else return "in file " + filePath + ", on line " + startLine + " there is a " + statementType + "\nThe node is:\n" + node;
+		else return "in file " + filePath + ", on line " + startLine + " there is a " + statementType + "\nThe node is:\n" + payLoad;
 	}
 }
 
@@ -120,9 +116,14 @@ class TreeNode<Activity> implements Iterable<TreeNode<Activity>> {
 	public List<TreeNode<Activity>> children;
 	
 	public TreeNode(Activity astNodePaylaod) {
-		System.out.println(astNodePaylaod);
 		this.astNodePayload = astNodePaylaod;
 		this.children = new ArrayList<TreeNode<Activity>>();
+	}
+	
+	public Boolean hasChild() {
+		if (children.size() > 0)
+			return true;
+		else return false;
 	}
 	
 	public void printNode() {
@@ -135,7 +136,7 @@ class TreeNode<Activity> implements Iterable<TreeNode<Activity>> {
 	public Boolean addChild(Activity astNodePayload) {
 		TreeNode<Activity> childNode = new TreeNode<Activity>(astNodePayload);
 		childNode.parentNode = this;
-		children.add(childNode);
+		this.children.add(childNode);
 		return true;
 	}
 	
