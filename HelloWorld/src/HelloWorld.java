@@ -15,7 +15,7 @@ public class HelloWorld {
 				 trees.add(new TreeNode<Activity>(new Activity(StatementType.NEW_TREE, filePath, 1, null)));
 				 parse(readFileToString(filePath), filePath, trees.get(trees.size() - 1));	 
 			 }
-		 
+
 		 for (TreeNode<Activity> tree : trees)	printTree(tree);
 	}
 
@@ -70,6 +70,13 @@ public class HelloWorld {
 				activities.addLast(type);
 				return true;
 			}
+			
+			public boolean visit(MethodInvocation astNode) {
+				System.out.println(astNode.toString());
+				System.out.println(astNode.getName());
+				System.out.println("-------------------------");
+				return true;
+			}
 */			
 			public boolean visit(MethodDeclaration astNode) {
 				Activity activity = new Activity(StatementType.METHOD_DECLARATION, path, cu.getLineNumber(astNode.getStartPosition()), astNode);
@@ -81,9 +88,7 @@ public class HelloWorld {
 	
 	private static void printTree(TreeNode<Activity> tree) {
 		tree.printNode();
-		if (tree.hasChild())
-			for (TreeNode<Activity> child : tree.children)
-				printTree(child);
+		if (tree.hasChild()) for (TreeNode<Activity> child : tree.children) printTree(child);
 	}
 }
 
@@ -91,26 +96,35 @@ public class HelloWorld {
 enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE }
 
 class Activity {
-	StatementType statementType; String filePath; int startLine; ASTNode payLoad;
+	public StatementType statementType; 
+	public String filePath; 
+	public int startLine; 
+	public ASTNode astNode;
 	
 	public Activity(StatementType statementType, String filePath, int startLine, ASTNode node) { 
 		this.statementType = statementType;
 		this.filePath = filePath;
 		this.startLine = startLine;
-		this.payLoad = node;
+		this.astNode = node;
 	}
 	
-	public String toString() {
-		if (payLoad == null)
+	public String getStatementType() { return statementType.toString(); }
+	
+	public ASTNode getPayLoad() { return this.astNode; }
+	
+ 	public String toString() {
+		if (astNode == null)
 			return "There is no data packet associated to this activity. This may be because it is used as a "
 					+ "root node for a class.";
-		else return "in file " + filePath + ", on line " + startLine + " there is a " + statementType + "\nThe node is:\n" + payLoad;
+		else return "in file " + filePath + ", on line " + startLine + " there is a " + statementType + "\nThe node is:\n" + astNode;
 	}
 }
 
 
 class TreeNode<Activity> {
-	TreeNode<Activity> parentNode = null; Activity astNodePayload; List<TreeNode<Activity>> children;
+	public TreeNode<Activity> parentNode = null; 
+	public Activity astNodePayload; 
+	public List<TreeNode<Activity>> children;
 	
 	public TreeNode(Activity astNodePaylaod) {
 		this.astNodePayload = astNodePaylaod;
@@ -122,8 +136,10 @@ class TreeNode<Activity> {
 	public void printNode() {
 		if (this.parentNode != null){
 			System.out.println("Parent Node is: " + parentNode);
-			System.out.println(astNodePayload);
+			System.out.println(astNodePayload.toString());
 		}
+		else
+			System.out.println(astNodePayload.toString());
 	}
 
 	public Boolean addChild(Activity astNodePayload) {
@@ -138,3 +154,4 @@ class TreeNode<Activity> {
 
 //http://www.programcreek.com/2011/11/use-jdt-astparser-to-parse-java-file/
 //https://stackoverflow.com/questions/3522454/java-tree-data-structure
+//http://www.programcreek.com/2011/07/find-all-callers-of-a-method/ GET ALL CALLERS OF A METHOD
