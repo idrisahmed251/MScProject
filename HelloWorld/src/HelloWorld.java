@@ -80,19 +80,18 @@ public class HelloWorld {
 	}
 	
 	private static void printTree(TreeNode<Activity> tree) {
+		tree.printNode();
 		if (tree.hasChild())
 			for (TreeNode<Activity> child : tree.children)
 				printTree(child);
 	}
 }
 
+
 enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE }
 
 class Activity {
-	StatementType statementType;
-	String filePath;
-	int startLine;
-	ASTNode payLoad;
+	StatementType statementType; String filePath; int startLine; ASTNode payLoad;
 	
 	public Activity(StatementType statementType, String filePath, int startLine, ASTNode node) { 
 		this.statementType = statementType;
@@ -110,25 +109,19 @@ class Activity {
 }
 
 
-class TreeNode<Activity> implements Iterable<TreeNode<Activity>> {
-	public TreeNode<Activity> parentNode = null;
-	public Activity astNodePayload;
-	public List<TreeNode<Activity>> children;
+class TreeNode<Activity> {
+	TreeNode<Activity> parentNode = null; Activity astNodePayload; List<TreeNode<Activity>> children;
 	
 	public TreeNode(Activity astNodePaylaod) {
 		this.astNodePayload = astNodePaylaod;
 		this.children = new ArrayList<TreeNode<Activity>>();
 	}
 	
-	public Boolean hasChild() {
-		if (children.size() > 0)
-			return true;
-		else return false;
-	}
+	public Boolean hasChild() { if (children.size() > 0) return true; else return false; }
 	
 	public void printNode() {
 		if (this.parentNode != null){
-			System.out.println("Parent Node is: " + parentNode.toString());
+			System.out.println("Parent Node is: " + parentNode);
 			System.out.println(astNodePayload);
 		}
 	}
@@ -141,115 +134,7 @@ class TreeNode<Activity> implements Iterable<TreeNode<Activity>> {
 	}
 	
 	public Boolean isRootNode() { if (parentNode == null) return true; else return false; }
-	
-	//public String toString() { if (astNodePayload != null) return (this.astNodePayload.toString()); else return null;}
-
-	public Iterator<TreeNode<Activity>> iterator() { return new treeIterator();	}
-	
-	private class treeIterator implements Iterator<TreeNode<Activity>> {
-		private List<TreeNode<Activity>> childNodes;
-		private int index = 0;
-		public treeIterator() { childNodes = TreeNode.this.children; childNodes.add(0, TreeNode.this); }
-		@Override
-		public boolean hasNext() { if (index < childNodes.size() - 1) return true; else return false; }
-		@Override
-		public TreeNode<Activity> next() { return childNodes.get(index++); }
-	}
 }
-
-
-
-
-
-/*
-class TreeNode<Activity> implements Iterable<TreeNode<Activity>> {
-    private TreeNode<Activity> parent;
-    private Activity nodeData;
-    private List<TreeNode<Activity>> children;
-    private List<TreeNode<Activity>> callers;
-    public TreeNode(Activity data) {
-        this.nodeData = data;
-        this.children = new LinkedList<TreeNode<Activity>>();
-        this.callers = new ArrayList<TreeNode<Activity>>();
-    }
-	public Boolean addChild(Activity node) {
-        TreeNode<Activity> childNode = new TreeNode<Activity>(node);
-        childNode.parent = this;
-        this.children.add(childNode);
-        return true;
-    }
-    
-    public List<TreeNode<Activity>> getAllChildren() { return this.children; }
-    
-    public List<TreeNode<Activity>> getAllMethodsThatCallThisNode() { return this.callers; }
-    
-    public Activity getActivityInNode() { return this.nodeData; }
-    
-    public TreeNode<Activity> getParent() { return this.parent; }
-    
-    public Boolean isRoot() { if (parent == null) return true; else return false; }
-    
-	@Override
-	public Iterator<TreeNode<Activity>> iterator() {
-		return new TreeNodeIterator();
-	}
-	
-	private class TreeNodeIterator implements Iterator<TreeNode<Activity>> {
-
-		private int index;
-		
-		@Override
-		public boolean hasNext() {
-			return children.get(children.size()) != null;
-		}
-
-		@Override
-		public TreeNode<Activity> next() {
-			if (this.hasNext()) {
-				//TreeNode<Activity> current = index;
-				index ++;
-				return null;
-			}
-			return null;
-		}
-		
-	}
-
-    
-	
-	
-	*/
-	
-	
-	
-	
-	
-	
-	
-    
-    /*
-	@Override
-	public Iterator<TreeNode<Activity>> iterator() {
-		Iterator<TreeNode<Activity>> it = new Iterator<TreeNode<Activity>>() {
-			private int index = 0;
-
-			@Override
-			public boolean hasNext() {
-				return children.get(children.size()) != null;
-			}
-			
-			@Override
-			public TreeNode<Activity> next() {
-				return children.get(index++);
-			}
-		};
-		return null;
-	}*/
-//}
-
 
 //http://www.programcreek.com/2011/11/use-jdt-astparser-to-parse-java-file/
 //https://stackoverflow.com/questions/3522454/java-tree-data-structure
-//https://stackoverflow.com/questions/5849154/can-we-write-our-own-iterator-in-java
-//https://codereview.stackexchange.com/questions/48109/simple-example-of-an-iterable-and-an-iterator-in-java
-	
