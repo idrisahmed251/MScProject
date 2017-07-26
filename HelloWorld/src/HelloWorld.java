@@ -16,7 +16,7 @@ public class HelloWorld {
 				 parse(readFileToString(filePath), filePath, trees.get(trees.size() - 1));	 
 			 }
 
-		 for (TreeNode<Activity> tree : trees)	printTree(tree);
+		 for (TreeNode<Activity> tree : trees)	printTree(tree); //PRINT THE TREE FROM ROOT NODE GOING LEFT TO RIGHT(PARENT BEFORE CHILD)
 	}
 
 	public static String readFileToString(String filePath) throws IOException {
@@ -78,8 +78,22 @@ public class HelloWorld {
 				return true;
 			}
 */			
+			public boolean visit(VariableDeclarationFragment node) {
+				SimpleName name = node.getName();
+				/*System.out.println("Declaration of '"+name+"' at line"+cu.getLineNumber(name.getStartPosition()));*/
+				Activity a = tree.getLastNode(tree);
+				//System.out.println(a.getStatementType() + a.getPayLoad());
+				//System.out.println(node.getParent().getParent().getParent());
+				//System.out.println("-------------------------");
+				
+				Activity activity = new Activity(StatementType.VARIABLE_DECLARATION, path, cu.getLineNumber(node.getStartPosition()), node);
+				tree.addChild(activity);
+				System.out.println(name);
+				return false; // do not continue to avoid usage info
+			}
+
 			public boolean visit(MethodDeclaration astNode) {
-				Activity activity = new Activity(StatementType.METHOD_DECLARATION, path, cu.getLineNumber(astNode.getStartPosition()), astNode);
+				MethodDeclarationActivity activity = new MethodDeclarationActivity(StatementType.METHOD_DECLARATION, path, cu.getLineNumber(astNode.getStartPosition()), astNode);
 				tree.addChild(activity);
 				return true;
 			}
@@ -93,7 +107,35 @@ public class HelloWorld {
 }
 
 
-enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE }
+enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE, VARIABLE_DECLARATION }
+
+class MethodDeclarationActivity extends Activity {
+
+	List modifiers; Type returnType; String methodName; String params; String methodBody; List methodVariables; 
+	
+	public MethodDeclarationActivity(StatementType statementType, String filePath, int startLine, ASTNode node) {
+		super(statementType, filePath, startLine, node);
+		MethodDeclaration n = (MethodDeclaration) node;
+		modifiers = n.modifiers();
+		returnType = n.getReturnType2();
+		methodName = n.getName().toString();
+		params = n.parameters().toString();
+		methodBody = n.getBody().toString();
+		//print();
+	}
+	
+	public void addMethodVariable(String variable) {
+		System.out.println(variable);
+		methodVariables.add(variable);
+	}
+	
+	public void print() {
+		System.out.println(modifiers + " " + returnType + " " + methodName + " " + params);
+		System.out.println(methodBody);
+		System.out.println(methodVariables);
+		System.out.println("---------------------------------------------------");
+	}
+}
 
 class Activity {
 	public StatementType statementType; 
@@ -131,6 +173,25 @@ class TreeNode<Activity> {
 		this.children = new ArrayList<TreeNode<Activity>>();
 	}
 	
+	public Activity getLastNode(TreeNode<Activity> treeNode) {
+		/*if (this.hasChild()) {
+			getLastNode(children.get(children.size() - 1));
+			//return children.get(children.size() - 1).astNodePayload;
+		}
+		//else return astNodePayload;
+		return treeNode.astNodePayload;*/
+		
+		TreeNode<Activity> tna = treeNode;
+		if (tna.hasChild()) {
+			while (tna.hasChild()) {
+				if (tna.hasChild()) {
+					tna = children.get(children.size() - 1);
+				}
+			}
+		}
+		return tna.astNodePayload;
+	}
+
 	public Boolean hasChild() { if (children.size() > 0) return true; else return false; }
 	
 	public void printNode() {
@@ -155,3 +216,13 @@ class TreeNode<Activity> {
 //http://www.programcreek.com/2011/11/use-jdt-astparser-to-parse-java-file/
 //https://stackoverflow.com/questions/3522454/java-tree-data-structure
 //http://www.programcreek.com/2011/07/find-all-callers-of-a-method/ GET ALL CALLERS OF A METHOD
+
+/*
+for (MethodDeclaration method : visitor.getMethods()) {
+String method_Name=method.getName().toString();
+      String method_Parameters= method.parameters().toString();
+       String method_Body=method.getBody().toString(); // Let me know if you will get strange errors in this type conversion to String because at the moment I do not investigate the reason of error. You will need good
+                                                       // volume of testing code to see this error. not just a class 
+      String method_Modifier=method.modifiers().toString();
+}
+*/
