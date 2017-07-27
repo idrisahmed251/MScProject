@@ -81,14 +81,16 @@ public class HelloWorld {
 			public boolean visit(VariableDeclarationFragment node) {
 				SimpleName name = node.getName();
 				/*System.out.println("Declaration of '"+name+"' at line"+cu.getLineNumber(name.getStartPosition()));*/
-				Activity a = tree.getLastNode(tree);
+				/*Activity a = tree.getLastNode(tree);*/
 				//System.out.println(a.getStatementType() + a.getPayLoad());
 				//System.out.println(node.getParent().getParent().getParent());
 				//System.out.println("-------------------------");
 				
 				Activity activity = new Activity(StatementType.VARIABLE_DECLARATION, path, cu.getLineNumber(node.getStartPosition()), node);
-				tree.addChild(activity);
-				System.out.println(name);
+				TreeNode<Activity> lastNode = tree.getLastNode(tree);
+				lastNode.addChild(activity);
+				//tree.addChild(activity);
+				//System.out.println(name);
 				return false; // do not continue to avoid usage info
 			}
 
@@ -173,7 +175,7 @@ class TreeNode<Activity> {
 		this.children = new ArrayList<TreeNode<Activity>>();
 	}
 	
-	public Activity getLastNode(TreeNode<Activity> treeNode) {
+	public TreeNode<Activity> getLastNode(TreeNode<Activity> treeNode) {
 		/*if (this.hasChild()) {
 			getLastNode(children.get(children.size() - 1));
 			//return children.get(children.size() - 1).astNodePayload;
@@ -189,12 +191,18 @@ class TreeNode<Activity> {
 				}
 			}
 		}
-		return tna.astNodePayload;
+		return tna;
 	}
 
 	public Boolean hasChild() { if (children.size() > 0) return true; else return false; }
 	
 	public void printNode() {
+/*		Activity newNode = this.astNodePayload.astNode;
+		if (this.parentNode != null) {
+			newNode.getStatementType();
+				
+			}
+		}*/
 		if (this.parentNode != null){
 			System.out.println("Parent Node is: " + parentNode);
 			System.out.println(astNodePayload.toString());
