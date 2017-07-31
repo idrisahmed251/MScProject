@@ -5,6 +5,8 @@ import org.eclipse.jdt.core.dom.*;
 public class HelloWorld {
 	
 	static ArrayList<TreeNode<Activity>> trees = new ArrayList<TreeNode<Activity>>();
+	static ArrayList tempa = new ArrayList();
+	static ArrayList<String> tempb = new ArrayList();
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		File root = new File(new File(".").getCanonicalPath() + File.separator+"src"+File.separator);
@@ -16,7 +18,8 @@ public class HelloWorld {
 				 parse(readFileToString(filePath), filePath, trees.get(trees.size() - 1));	 
 			 }
 
-		 for (TreeNode<Activity> tree : trees)	printTree(tree); //PRINT THE TREE FROM ROOT NODE GOING LEFT TO RIGHT(PARENT BEFORE CHILD)
+		 //for (TreeNode<Activity> tree : trees)	printTree(tree); //PRINT THE TREE FROM ROOT NODE GOING LEFT TO RIGHT(PARENT BEFORE CHILD)
+		 
 	}
 
 	public static String readFileToString(String filePath) throws IOException {
@@ -36,10 +39,13 @@ public class HelloWorld {
 	public static void parse(String file, String path, TreeNode<Activity> tree) {
 		ASTParser parser = ASTParser.newParser(AST.JLS3);
 		parser.setSource(file.toCharArray());
+		parser.setProject(null);
+		
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		final CompilationUnit cu = (CompilationUnit) parser.createAST(null);
 
 		cu.accept(new ASTVisitor() {
+			
 /*
 			public boolean visit(IfStatement node) {
 				Activity type = new Activity(StatementType.CONDITIONAL_STATEMENT, filePath, cu.getLineNumber(node.getStartPosition()), node);
@@ -70,27 +76,30 @@ public class HelloWorld {
 				activities.addLast(type);
 				return true;
 			}
+			*/
 			
 			public boolean visit(MethodInvocation astNode) {
-				System.out.println(astNode.toString());
-				System.out.println(astNode.getName());
-				System.out.println("-------------------------");
+				MethodDeclaration methodNode = (MethodDeclaration) getDeclaredMethod(astNode);
+				Activity activity = new Activity(StatementType.METHOD_INVOCATION, path, cu.getLineNumber(astNode.getStartPosition()), astNode);
 				return true;
 			}
-*/			
+			
+			public ASTNode getDeclaredMethod(ASTNode node) {
+				ASTNode tempNode = node;
+				while (tempNode.getNodeType() != 15) {
+					if (tempNode.getNodeType() == 31)
+						return tempNode;
+					tempNode = tempNode.getParent();
+				}
+				return tempNode;
+			}
+			
 			public boolean visit(VariableDeclarationFragment node) {
-				SimpleName name = node.getName();
-				/*System.out.println("Declaration of '"+name+"' at line"+cu.getLineNumber(name.getStartPosition()));*/
-				/*Activity a = tree.getLastNode(tree);*/
-				//System.out.println(a.getStatementType() + a.getPayLoad());
-				//System.out.println(node.getParent().getParent().getParent());
-				//System.out.println("-------------------------");
+				ASTNode parentNode = getDeclaredMethod(node);
+				MethodDeclaration methodName = null;
+				if (parentNode.getNodeType() == 31) methodName = (MethodDeclaration) getDeclaredMethod(node);
 				
 				Activity activity = new Activity(StatementType.VARIABLE_DECLARATION, path, cu.getLineNumber(node.getStartPosition()), node);
-				TreeNode<Activity> lastNode = tree.getLastNode(tree);
-				lastNode.addChild(activity);
-				//tree.addChild(activity);
-				//System.out.println(name);
 				return false; // do not continue to avoid usage info
 			}
 
@@ -109,7 +118,7 @@ public class HelloWorld {
 }
 
 
-enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE, VARIABLE_DECLARATION }
+enum StatementType { METHOD_DECLARATION, CONDITIONAL_STATEMENT, REPEATED_EXECUTION, NEW_TREE, VARIABLE_DECLARATION, METHOD_INVOCATION }
 
 class MethodDeclarationActivity extends Activity {
 
@@ -162,6 +171,14 @@ class Activity {
 					+ "root node for a class.";
 		else return "in file " + filePath + ", on line " + startLine + " there is a " + statementType + "\nThe node is:\n" + astNode;
 	}
+ 	
+	
+	public TreeNode<Activity> getParentOfVariableDeclaration(VariableDeclaration node, TreeNode treeRoot) {
+		System.out.println("$$$$$$" + node + "$$$$$");
+		System.out.println(node.getParent().getParent());
+		
+		return treeRoot;
+	}
 }
 
 
@@ -174,6 +191,7 @@ class TreeNode<Activity> {
 		this.astNodePayload = astNodePaylaod;
 		this.children = new ArrayList<TreeNode<Activity>>();
 	}
+
 	
 	public TreeNode<Activity> getLastNode(TreeNode<Activity> treeNode) {
 		/*if (this.hasChild()) {
