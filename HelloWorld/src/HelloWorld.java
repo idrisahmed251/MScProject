@@ -5,6 +5,7 @@ import org.eclipse.jdt.core.dom.*;
 public class HelloWorld {
 	
 	static ArrayList<TreeNode<Activity>> trees = new ArrayList<TreeNode<Activity>>();
+	static Map<Activity, Set<Activity>> methodsCalled = new HashMap<Activity, Set<Activity>>();
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		File root = new File(new File(".").getCanonicalPath() + File.separator+"src"+File.separator);
@@ -17,6 +18,9 @@ public class HelloWorld {
 			 }
 
 		 //for (TreeNode<Activity> tree : trees)	printTree(tree); //PRINT THE TREE FROM ROOT NODE GOING LEFT TO RIGHT(PARENT BEFORE CHILD)
+		/* for (Activity a : methodsCalled.keySet())
+			 System.out.println(a.statementType + "\t" + a.astNode + "\n" + methodsCalled.get(a));*/
+		 //THIS WILL PRINT OUT ALL THE METHODS. SOME METHODS MAY NOT HAVE ANY VALUES IN THE HASHMAP SO YOU WILL NEED TO CHECK FOR NULL IN FUTURE.
 		 
 	}
 
@@ -82,6 +86,8 @@ public class HelloWorld {
 				TreeNode<Activity> nodeInTree = findMatchingNodeInTree(parentNode, tree);
 				if (nodeInTree == null) tree.addChild(activity); 
 				else nodeInTree.addChild(activity);
+				
+				methodsCalled.get(nodeInTree.astNodePayload).add(activity);
 				return true;
 			}
 
@@ -127,6 +133,7 @@ public class HelloWorld {
 			public boolean visit(MethodDeclaration astNode) {
 				MethodDeclarationActivity activity = new MethodDeclarationActivity(StatementType.METHOD_DECLARATION, path, cu.getLineNumber(astNode.getStartPosition()), astNode);
 				tree.addChild(activity);
+				methodsCalled.put(activity, new HashSet<Activity>());
 				return true;
 			}
 		});
@@ -249,13 +256,3 @@ class TreeNode<Activity> {
 //http://www.programcreek.com/2011/11/use-jdt-astparser-to-parse-java-file/
 //https://stackoverflow.com/questions/3522454/java-tree-data-structure
 //http://www.programcreek.com/2011/07/find-all-callers-of-a-method/ GET ALL CALLERS OF A METHOD
-
-/*
-for (MethodDeclaration method : visitor.getMethods()) {
-String method_Name=method.getName().toString();
-      String method_Parameters= method.parameters().toString();
-       String method_Body=method.getBody().toString(); // Let me know if you will get strange errors in this type conversion to String because at the moment I do not investigate the reason of error. You will need good
-                                                       // volume of testing code to see this error. not just a class 
-      String method_Modifier=method.modifiers().toString();
-}
-*/
