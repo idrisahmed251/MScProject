@@ -9,6 +9,7 @@ public class Test {
 				if (true) {
 					System.out.println("Hello");
 					i ++;
+					hum();
 				}
 			}
 		}

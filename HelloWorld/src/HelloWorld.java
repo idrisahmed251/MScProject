@@ -77,40 +77,51 @@ public class HelloWorld {
 			*/
 			
 			public boolean visit(MethodInvocation astNode) {
-				MethodDeclaration methodNode = (MethodDeclaration) getDeclaredMethod(astNode);
+				MethodDeclaration parentNode = (MethodDeclaration) getDeclaredMethod(astNode);
 				Activity activity = new Activity(StatementType.METHOD_INVOCATION, path, cu.getLineNumber(astNode.getStartPosition()), astNode);
+				TreeNode<Activity> nodeInTree = findMatchingNodeInTree(parentNode, tree);
+				if (nodeInTree == null) tree.addChild(activity); 
+				else nodeInTree.addChild(activity);
 				return true;
 			}
-			
-			public ASTNode getDeclaredMethod(ASTNode node) {
-				ASTNode tempNode = node;
-				while (tempNode.getNodeType() != 15) {
-					if (tempNode.getNodeType() == 31)
-						return tempNode;
-					tempNode = tempNode.getParent();
-				}
-				return tempNode;
-			}
-			
+
 			public boolean visit(VariableDeclarationFragment node) {
 				ASTNode parentNode = getDeclaredMethod(node);
-				if (parentNode.getNodeType() == 31) parentNode = (MethodDeclaration) getDeclaredMethod(node);
-				Activity activity = new Activity(StatementType.VARIABLE_DECLARATION, path, cu.getLineNumber(node.getStartPosition()), parentNode);
-				TreeNode<Activity> treeNodeToAddTo = findMatchingNodeInTree(activity, tree);
-				if (treeNodeToAddTo == null) tree.addChild(activity); else treeNodeToAddTo.addChild(activity);
+				if (parentNode.getNodeType() == 31)
+					parentNode = (MethodDeclaration) getDeclaredMethod(node);
+				Activity activity = new Activity(StatementType.VARIABLE_DECLARATION, path, cu.getLineNumber(node.getStartPosition()), node);
+				
+				TreeNode<Activity> nodeInTree = findMatchingNodeInTree(parentNode, tree);
+				if (nodeInTree == null) tree.addChild(activity); else nodeInTree.addChild(activity);
 				return false; // do not continue to avoid usage info
 			}
 
-			private TreeNode<Activity> findMatchingNodeInTree(Activity activity, TreeNode<Activity> tree) {	
+			public TreeNode<Activity> findMatchingNodeInTree(ASTNode parentNode, TreeNode<Activity> tree) {
 				Activity activityInTreeNode = tree.astNodePayload;
-				if (activityInTreeNode != null) 
-					if (activity.getPayLoad() == activityInTreeNode.getPayLoad())
-						return tree;
+				TreeNode<Activity> oneToReturn = tree;
 				
-				for (TreeNode<Activity> tna : tree.children)
-					findMatchingNodeInTree(activity, tna);
+				if (activityInTreeNode.astNode == null || activityInTreeNode.astNode != parentNode) {
+					for (TreeNode<Activity> tna : tree.children)
+						if (tna.astNodePayload.astNode == parentNode) {
+							oneToReturn = tna;
+							break;
+						}
+				}
 				
-				return null;
+				return oneToReturn;
+			}
+			
+			
+
+			public ASTNode getDeclaredMethod(ASTNode node) {
+				ASTNode tempNode = node;
+				while (tempNode.getNodeType() != 15) {
+					if (tempNode.getNodeType() == 31) {
+						return tempNode;
+					}
+					tempNode = tempNode.getParent();
+				}
+				return tempNode;
 			}
 
 			public boolean visit(MethodDeclaration astNode) {
@@ -181,14 +192,6 @@ class Activity {
 					+ "root node for a class.";
 		else return "in file " + filePath + ", on line " + startLine + " there is a " + statementType + "\nThe node is:\n" + astNode;
 	}
- 	
-	
-	public TreeNode<Activity> getParentOfVariableDeclaration(VariableDeclaration node, TreeNode treeRoot) {
-		System.out.println("$$$$$$" + node + "$$$$$");
-		System.out.println(node.getParent().getParent());
-		
-		return treeRoot;
-	}
 }
 
 
@@ -201,7 +204,6 @@ class TreeNode<Activity> {
 		this.astNodePayload = astNodePaylaod;
 		this.children = new ArrayList<TreeNode<Activity>>();
 	}
-
 	
 	public TreeNode<Activity> getLastNode(TreeNode<Activity> treeNode) {
 		/*if (this.hasChild()) {
@@ -221,16 +223,11 @@ class TreeNode<Activity> {
 		}
 		return tna;
 	}
+	
 
 	public Boolean hasChild() { if (children.size() > 0) return true; else return false; }
 	
 	public void printNode() {
-/*		Activity newNode = this.astNodePayload.astNode;
-		if (this.parentNode != null) {
-			newNode.getStatementType();
-				
-			}
-		}*/
 		if (this.parentNode != null){
 			System.out.println("Parent Node is: " + parentNode);
 			System.out.println(astNodePayload.toString());
